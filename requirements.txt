@@ -1,0 +1,35 @@
+# FastAPI and ASGI server
+fastapi==0.103.1
+uvicorn==0.23.2
+
+# Database
+motor==3.3.0
+pymongo==4.5.0
+pymongo[srv]==4.5.0  # Includes BSON
+
+# Data validation
+pydantic==2.3.0
+pydantic[email]==2.3.0
+pydantic-settings==2.0.3
+email-validator==2.0.0
+
+# Security and Authentication
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.6
+
+# Text sanitization
+nh3==0.2.14
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Middleware
+starlette==0.27.0
+
+# Utilities
+cachetools==5.3.1
+
+# Testing
+pytest==7.4.0
+httpx==0.25.0
