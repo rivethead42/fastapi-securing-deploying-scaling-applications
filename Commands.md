@@ -2,21 +2,21 @@
 
 A RESTful API for managing widgets with user authentication, built with FastAPI and MongoDB.
 
-#Module 3 Clip 1
+# Module 3 Clip 1
 
-##Install EksClt:
+## Install EksClt:
 ```
 choco install eksctl
 ```
 [EksCtl Install Docs](https://eksctl.io/installation/)
 
-##Install AWS CLI on Windows:
+## Install AWS CLI on Windows:
 ```
 msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi
 ```
 [AWS CLI Install Docs](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
 
-##AWS Policies Setup
+## AWS Policies Setup
 Create a user group called eks-group witht the following policies:
 ```
 AmazonEC2FullAccess
