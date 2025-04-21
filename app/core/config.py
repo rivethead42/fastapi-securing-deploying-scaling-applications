@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # Authentication settings
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-please-change-in-production")
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", 30)
     
     # CORS settings - we'll configure this in code instead of from env
     CORS_ORIGINS_STR: Optional[str] = None

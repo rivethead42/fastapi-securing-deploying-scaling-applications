@@ -2,12 +2,47 @@
 
 A RESTful API for managing widgets with user authentication, built with FastAPI and MongoDB.
 
-Create a SSL Certificate:
+#Module 3 Clip 1
+
+##Install EksClt:
 ```
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem
+choco install eksctl
+```
+[EksCtl Install Docs](https://eksctl.io/installation/)
+
+##Install AWS CLI on Windows:
+```
+msiexec.exe /i https://awscli.amazonaws.com/AWSCLIV2.msi
+```
+[AWS CLI Install Docs](https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html)
+
+##AWS Policies Setup
+Create a user group called eks-group witht the following policies:
+```
+AmazonEC2FullAccess
+IAMFullAccess
+AWSCloudFormationFullAccess
 ```
 
-Run Uvicorn with SSL:
+Create an inline policy called eks-policy:
 ```
-uvicorn main:app --ssl-keyfile=key.pem --ssl-certfile=cert.pem --reload 
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "Statement1",
+			"Effect": "Allow",
+			"Action": "eks:*",
+			"Resource": "*"
+		},
+        {
+            "Action": [
+                "ssm:GetParamater",
+                "ssm:GetParamaters"
+            ],
+            "Resource": "*",
+            "Effect": "Allow"
+        }
+	]
+}
 ```
