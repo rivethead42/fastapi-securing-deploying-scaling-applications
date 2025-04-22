@@ -18,6 +18,7 @@ git push origin <TAGNAME>
 Setup:
 ```
 sudo apt update
+sudo apt upgrade -y
 sudo apt install unzip -y
 cd /opt
 ```
@@ -32,6 +33,7 @@ cd app
 
 Create a virtual environment:
 ```
+apt install python3.12-venv -y
 python3 -m venv venv
 source venv/bin/activate
 ```
@@ -90,40 +92,22 @@ sudo apt update
 sudo apt install nginx -y
 ```
 
-Setup the config file:
+Edit default:
 ```
-http {
+server {
+  listen 80;
 
-    include mime.types;
+  server_name <IP_ADDRESS <DOMAIN_NAME>;
 
-    set_real_ip_from  0.0.0.0/0;
-    real_ip_recursive on;
-    real_ip_header    X-Forward-For;
-    limit_req_zone    $binary_remote_addr zone=apilimit:10m rate=10r/s;
-
-    upstream fastapi {
-        server localhost:8000;
-    }
-
-    server {
-        listen 80;
-        server_name localhost;
-        root /proxy;
-        #limit_req zone=apilimit;
-        limit_req zone=apilimit burst=40 nodelay;
-
-        location / {
-            proxy_pass                 http://fastapi;
-            proxy_http_version         1.1;
-            proxy_set_header           Upgrade $http_upgrade;
-            proxy_set_header           Connection 'upgrade';
-            proxy_set_header           Host $host;proxy_cache_bypass $http_upgrade;
-            proxy_pass_request_headers on;
-        }
-    }
+  location / {
+    proxy_pass http://localhost:8000;
+  }
 }
+```
 
-events {}
+Restart Nginx
+```
+sudo service nginx restart
 ```
 
 # Module 3 Clip 5: Dockerizing FastAPI
