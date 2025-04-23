@@ -211,6 +211,11 @@ eksctl delete cluster --name pscluster
 
 # Module 3 Clip 9: Setting Up ECR:
 Create an ECR repository:
+Add the following policy:
+```
+AmazonEC2ContainerRegistryFullAccess
+```
+
 ```
 aws ecr create-repository --repository-name <RESPOSITORY> --region us-east-1
 ```
