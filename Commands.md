@@ -182,7 +182,7 @@ aws configure
 
 Deploy the EKS Cluster:
 ```
-eksctl create cluster --name pscluster --nodes-min=3 --nodes-max=4 --instance-selector-vcpus=2 --instance-selector-memory=4 --version=1.30
+eksctl create cluster --name pscluster --nodes-min=3 --nodes-max=4 --instance-selector-vcpus=2 --instance-selector-memory=4 --version=1.32
 ```
 ## Create ECR polocy
 Setup IAM ecr-policy:
@@ -218,4 +218,9 @@ aws ecr create-repository --repository-name <RESPOSITORY> --region us-east-1
 Login to ECR:
 ```
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <RESPOSITORY>
+```
+
+# Module 3 Clip 10:
+```
+aws eks --region us-east-1 update-kubeconfig --name pscluster
 ```
