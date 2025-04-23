@@ -236,7 +236,58 @@ Push the image to ECR:
 docker push <RESPOSITORY>:latest
 ```
 
-# Module 3 Clip 10:
+# Module 3 Clip 10: Setting Up Storage
+Setup kubeconfig:
 ```
 aws eks --region us-east-1 update-kubeconfig --name pscluster
 ```
+
+Setup IAM OIDC provider for a cluster to enable IAM roles for pods:
+```
+eksctl utils associate-iam-oidc-provider --cluster pscluster --approve
+```
+
+Create an iamserviceaccount - AWS IAM role bound to a Kubernetes service account
+```
+eksctl create iamserviceaccount \
+    --name ebs-csi-controller-sa \
+    --namespace kube-system \
+    --cluster pscluster \
+    --role-name AmazonEKS_EBS_CSI_DriverRole \
+    --role-only \
+    --attach-policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy \
+    --approve
+```
+
+Create ebs cli driver:
+```
+eksctl create addon \
+    --name aws-ebs-csi-driver \
+    --cluster pscluster \
+    --service-account-role-arn <ARN> --force
+```
+
+Create a storageclass.yml:
+```
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ebs-sc
+provisioner: kubernetes.io/aws-ebs
+volumeBindingMode: WaitForFirstConsumer
+parameters:
+  type: gp2
+```
+
+Apply the storage class manifest:
+```
+kubectl apply -f storageclass.yml
+```
+
+List all Storage Classes:
+```
+kubectl get storageclass
+```
+
+# Module 3 Clip 11:
+
