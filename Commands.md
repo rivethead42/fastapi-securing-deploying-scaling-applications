@@ -174,6 +174,11 @@ Create an inline policy called eks-policy:
 ```
 
 # Module 3 Clip 8: Setting Up ECR:
+Configure the AWS credicials:
+```
+aws configure
+```
+
 Create an ECR repository:
 ```
 aws ecr create-repository --repository-name <RESPOSITORY> --region us-east-1
@@ -186,11 +191,6 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 
 # Module 3 Clip 9: Deploying EKS
 ## Create the EKS cluster
-Configure the AWS credicials:
-```
-aws configure
-```
-
 Deploy the EKS Cluster:
 ```
 eksctl create cluster --name pscluster --nodes-min=3 --nodes-max=4 --instance-selector-vcpus=2 --instance-selector-memory=4 --version=1.30
