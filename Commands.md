@@ -111,31 +111,21 @@ sudo service nginx restart
 ```
 
 # Module 3 Clip 5: Dockerizing FastAPI
-## Setting up Docker registrory in AWS:
-Create an ECR repository:
-```
-aws ecr create-repository --repository-name <respository> --region us-east-1
-```
-
-# Login to ECR:
-```
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <RESPOSITORY>
-```
 
 ## Building the Docker Image
 Build the image:
 ```
-docker image build -t <RESPOSITORY> .
+docker image build -t <IMAGE_NAME> .
 ```
 
 Test the image:
 ```
-docker run -d -p 8000:8000 --env-file .env <RESPOSITORY>
+docker run -d -p 8000:8000 --env-file .env <IMAGE_NAME>
 ```
 
 Push the image to AWS:
 ```
-docker image push <RESPOSITORY>:latest
+docker image push <IMAGE_NAME>:latest
 ```
 
 # Module 3 Clip 7: Setting up Eksctl
@@ -183,7 +173,18 @@ Create an inline policy called eks-policy:
 }
 ```
 
-# Module 3 Clip 8: Deploying EKS
+# Module 3 Clip 8: Setting Up ECR:
+Create an ECR repository:
+```
+aws ecr create-repository --repository-name <RESPOSITORY> --region us-east-1
+```
+
+Login to ECR:
+```
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <RESPOSITORY>
+```
+
+# Module 3 Clip 9: Deploying EKS
 ## Create the EKS cluster
 Configure the AWS credicials:
 ```
