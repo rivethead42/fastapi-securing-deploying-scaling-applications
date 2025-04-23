@@ -216,13 +216,24 @@ Add the following policy:
 AmazonEC2ContainerRegistryFullAccess
 ```
 
+Create repository:
 ```
 aws ecr create-repository --repository-name <RESPOSITORY> --region us-east-1
+```
+
+Build the image to be pushed to ECR:
+```
+docker image build -t <RESPOSITORY>:latest .
 ```
 
 Login to ECR:
 ```
 aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <RESPOSITORY>
+```
+
+Push the image to ECR:
+```
+docker push <RESPOSITORY>:latest
 ```
 
 # Module 3 Clip 10:
