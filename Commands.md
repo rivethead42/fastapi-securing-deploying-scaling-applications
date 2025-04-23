@@ -267,26 +267,71 @@ eksctl create addon \
     --service-account-role-arn <ARN> --force
 ```
 
-Create a storageclass.yml:
+Create a mongodb.yml:
 ```
-apiVersion: storage.k8s.io/v1
-kind: StorageClass
+---
+apiVersion: apps/v1
+kind: StatefulSet
 metadata:
-  name: ebs-sc
-provisioner: kubernetes.io/aws-ebs
-volumeBindingMode: WaitForFirstConsumer
-parameters:
-  type: gp2
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  serviceName: mongodb
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  template:
+    metadata:
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - name: mongodb
+        image: mongo:6
+        ports:
+        - containerPort: 27017
+        volumeMounts:
+        - name: mongodb-data
+          mountPath: /data/db
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+      volumes:
+      - name: mongodb-data
+        persistentVolumeClaim:
+          claimName: mongodb-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongodb
+  labels:
+    app: mongodb
+spec:
+  ports:
+  - port: 27017
+    targetPort: 27017
+    protocol: TCP
+    name: mongodb
+  selector:
+    app: mongodb
+  clusterIP: None
 ```
 
-Apply the storage class manifest:
+Apply the manifest:
 ```
-kubectl apply -f storageclass.yml
+kubectl apply -f mongodb.yml
 ```
 
-List all Storage Classes:
+List all pods:
 ```
-kubectl get storageclass
+kubectl get pods
 ```
 
 # Module 3 Clip 11:
