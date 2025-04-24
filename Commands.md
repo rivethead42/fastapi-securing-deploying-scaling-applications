@@ -387,14 +387,6 @@ spec:
           value: "mongodb://mongodb:27017"
         - name: SECRET_KEY
           value: Y2hhbmdlLXRoaXMtaW4tcHJvZHVjdGlvbg==
-        - name: CORS_ALLOW_ORIGINS
-          value: "*"
-        - name: RATE_LIMIT_ANON_REQUESTS
-          value: "30"
-        - name: RATE_LIMIT_AUTH_REQUESTS
-          value: "100"
-        - name: RATE_LIMIT_WINDOW_SECONDS
-          value: "60"
         resources:
           requests:
             cpu: 100m
