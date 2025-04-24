@@ -237,6 +237,10 @@ docker push <RESPOSITORY>:latest
 ```
 
 # Module 3 Clip 10: Setting Up Storage
+Install Kubectl:
+```
+https://kubernetes.io/docs/tasks/tools/install-kubectl-windows/
+```
 Setup kubeconfig:
 ```
 aws eks --region us-east-1 update-kubeconfig --name pscluster
@@ -269,6 +273,18 @@ eksctl create addon \
 
 Create a mongodb.yml:
 ```
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mongodb-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2
+  resources:
+    requests:
+      storage: 10Gi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
