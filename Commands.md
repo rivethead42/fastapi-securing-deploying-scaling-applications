@@ -350,7 +350,7 @@ List all pods:
 kubectl get pods
 ```
 
-# Module 3 Clip 11:
+# Module 3 Clip 11: Deploy FastAPI to EKS
 
 Create deployment.yml
 ```
@@ -416,4 +416,30 @@ kubectl apply -f mongodb.yml
 List all pods:
 ```
 kubectl get pods
+```
+# Module 3 Clip 12: Working with Sensitive Data
+Enode the secret:
+```
+echo -n "eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiYWRtaW4iOnRydWUsImlhdCI6MTUxNjIzOTAyMn0" | base64
+```
+
+Create secret.yml
+```
+apiVersion: v1
+kind: Secret
+metadata:
+  name: widget-api-secrets
+type: Opaque
+data:
+  # Replace with actual values using: echo -n "your-secret-key" | base64
+  secret-key: <ENCODED_VALUE>
+```
+
+Update deployment.yml:
+```
+ - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: widget-api-secrets
+              key: secret-key
 ```
