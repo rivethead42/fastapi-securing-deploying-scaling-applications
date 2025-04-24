@@ -352,3 +352,76 @@ kubectl get pods
 
 # Module 3 Clip 11:
 
+Create deployment.yml
+```
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: widget-api
+  labels:
+    app: widget-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: widget-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: widget-api
+    spec:
+      containers:
+      - name: widget-api
+        image: <RESPOSITORY>
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017"
+        - name: SECRET_KEY
+          value: Y2hhbmdlLXRoaXMtaW4tcHJvZHVjdGlvbg==
+        - name: CORS_ALLOW_ORIGINS
+          value: "*"
+        - name: RATE_LIMIT_ANON_REQUESTS
+          value: "30"
+        - name: RATE_LIMIT_AUTH_REQUESTS
+          value: "100"
+        - name: RATE_LIMIT_WINDOW_SECONDS
+          value: "60"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+```
+
+Apply the manifest:
+```
+kubectl apply -f mongodb.yml
+```
+
+List all pods:
+```
+kubectl get pods
+```
