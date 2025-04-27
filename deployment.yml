@@ -1,0 +1,55 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: widget-api
+  labels:
+    app: widget-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: widget-api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: widget-api
+    spec:
+      containers:
+      - name: widget-api
+        image: 337748711987.dkr.ecr.us-east-1.amazonaws.com/tthomsen-fastapi:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MONGO_URI
+          value: "mongodb://mongodb:27017"
+        - name: SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: widget-api-secrets
+              key: secret-key
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 20
