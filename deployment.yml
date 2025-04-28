@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: widget-api
-        image: <RESPOSITORY>:latest
+        image: <RESPOSITORY>:redis
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
@@ -34,6 +34,10 @@ spec:
             secretKeyRef:
               name: widget-api-secrets
               key: secret-key
+        - name: REDIS_URI
+          value: "redis://redis:6379/0"
+        - name: REDIS_TTL
+          value: "3600"
         resources:
           requests:
             cpu: 100m

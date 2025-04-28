@@ -1,10 +1,12 @@
 from bson import ObjectId
 from datetime import datetime
+import time
 from typing import List, Optional, Dict, Any
 from app.core.database import widgets_collection
 from app.core.cache import get_cache, set_cache, delete_cache, get_cache_keys
 from app.schemas.widget import Widget, WidgetCreate, WidgetUpdate
 from app.core.config import settings
+from app.core.metrics import record_db_metrics, record_widget_operation
 
 # Cache key templates
 WIDGET_KEY = "widget:{}"
@@ -13,12 +15,18 @@ WIDGETS_BY_CATEGORY_KEY = "widgets:owner:{}:category:{}"
 
 async def create_widget(widget: WidgetCreate, owner_id: str) -> Widget:
     """Create a new widget"""
+    # Record widget operation
+    record_widget_operation("create")
+    
     widget_dict = widget.dict()
     widget_dict["_id"] = str(ObjectId())
     widget_dict["owner"] = owner_id
     widget_dict["created_at"] = datetime.utcnow()
     
+    # Measure DB operation time
+    start_time = time.time()
     await widgets_collection.insert_one(widget_dict)
+    record_db_metrics("insert", "widgets", time.time() - start_time)
     
     # Invalidate cache for owner's widgets list
     owner_cache_key = WIDGETS_BY_OWNER_KEY.format(owner_id)
@@ -38,6 +46,9 @@ async def get_widgets(
     category: Optional[str] = None
 ) -> List[Widget]:
     """Get widgets by owner with optional filtering"""
+    # Record widget operation
+    record_widget_operation("list")
+    
     # Try to get from cache first
     cache_key = WIDGETS_BY_OWNER_KEY.format(owner_id)
     if category:
@@ -55,8 +66,11 @@ async def get_widgets(
     if category:
         query["category"] = category
     
+    # Measure DB operation time
+    start_time = time.time()
     cursor = widgets_collection.find(query).skip(skip).limit(limit)
     widgets = [Widget(**widget) async for widget in cursor]
+    record_db_metrics("find", "widgets", time.time() - start_time)
     
     # Store in cache
     widgets_dict = [widget.dict() for widget in widgets]
@@ -66,6 +80,9 @@ async def get_widgets(
 
 async def get_widget(widget_id: str, owner_id: str) -> Optional[Widget]:
     """Get a widget by ID and owner"""
+    # Record widget operation
+    record_widget_operation("get")
+    
     # Try to get from cache first
     cache_key = WIDGET_KEY.format(widget_id)
     cached_widget = await get_cache(cache_key)
@@ -76,7 +93,10 @@ async def get_widget(widget_id: str, owner_id: str) -> Optional[Widget]:
             return widget
     
     # If not in cache or wrong owner, query database
+    start_time = time.time()
     widget = await widgets_collection.find_one({"_id": widget_id, "owner": owner_id})
+    record_db_metrics("findOne", "widgets", time.time() - start_time)
+    
     if widget:
         widget_obj = Widget(**widget)
         # Store in cache
@@ -90,6 +110,9 @@ async def update_widget(
     widget_update: WidgetUpdate
 ) -> Optional[Widget]:
     """Update a widget"""
+    # Record widget operation
+    record_widget_operation("update")
+    
     # Filter out None values
     update_data = {k: v for k, v in widget_update.dict().items() if v is not None}
     if not update_data:
@@ -100,10 +123,12 @@ async def update_widget(
     update_data["updated_at"] = datetime.utcnow()
     
     # Update in database
+    start_time = time.time()
     result = await widgets_collection.update_one(
         {"_id": widget_id, "owner": owner_id},
         {"$set": update_data}
     )
+    record_db_metrics("updateOne", "widgets", time.time() - start_time)
     
     if result.modified_count == 0 and result.matched_count == 0:
         return None
@@ -127,7 +152,12 @@ async def update_widget(
 
 async def delete_widget(widget_id: str, owner_id: str) -> bool:
     """Delete a widget"""
+    # Record widget operation
+    record_widget_operation("delete")
+    
+    start_time = time.time()
     result = await widgets_collection.delete_one({"_id": widget_id, "owner": owner_id})
+    record_db_metrics("deleteOne", "widgets", time.time() - start_time)
     
     if result.deleted_count > 0:
         # Delete from cache
@@ -149,6 +179,9 @@ async def delete_widget(widget_id: str, owner_id: str) -> bool:
 
 async def count_widgets(owner_id: str, category: Optional[str] = None) -> int:
     """Count widgets by owner with optional filtering"""
+    # Record widget operation
+    record_widget_operation("count")
+    
     # Try to get from cache
     cache_key = f"count:widgets:owner:{owner_id}"
     if category:
@@ -163,9 +196,13 @@ async def count_widgets(owner_id: str, category: Optional[str] = None) -> int:
     if category:
         query["category"] = category
     
+    start_time = time.time()
     count = await widgets_collection.count_documents(query)
+    record_db_metrics("countDocuments", "widgets", time.time() - start_time)
     
     # Cache result
     await set_cache(cache_key, count, settings.REDIS_TTL)
+    
+    return countREDIS_TTL
     
     return count

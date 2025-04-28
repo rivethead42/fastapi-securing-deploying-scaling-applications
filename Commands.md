@@ -2,9 +2,111 @@
 
 A RESTful API for managing widgets with user authentication, built with FastAPI and MongoDB.
 
-# Module 4 Clip 2: Load Balancing in EKS
+# Module 5 Clip 1: Prometheus and Grafana
+## Setup Helm
+Install Helm on Windows:
+```
+choco install kubernetes-helm
+```
 
-Create service.yml:
+## Configure Prometheus
+Add the Prometheus Helm Repository:
+```
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+```
+
+Create the moinitoring namespace:
+```
+kubectl create namespace monitoring
+```
+
+Install Prometheus using Helm:
+```
+helm install prometheus prometheus-community/prometheus \
+  --namespace monitoring \
+  --set alertmanager.persistentVolume.storageClass=gp2 \
+  --set server.persistentVolume.storageClass=gp2 \
+  --values - <<EOF
+server:
+  additionalScrapeConfigs:
+    - job_name: 'widget-api'
+      static_configs:
+        - targets: ['widget-api:8000']
+EOF
+```
+
+
+
+## Configure Grafana:
+Add the Grafana Helm Repository:
+```
+helm repo add grafana https://grafana.github.io/helm-charts
+helm repo update
+```
+
+Install Grafana using Helm:
+```
+helm install grafana grafana/grafana \
+  --namespace monitoring \
+  --set persistence.storageClassName=gp2 \
+  --set persistence.enabled=true \
+  --set adminPassword='YourSecurePassword' \
+  --values - <<EOF
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Prometheus
+      type: prometheus
+      url: http://prometheus-server.monitoring.svc.cluster.local
+      access: proxy
+      isDefault: true
+EOF
+```
+
+Setup port forwarding to access Grafana:
+```
+kubectl port-forward -n monitoring svc/grafana 3000:80
+```
+
+Get the Admin password:
+```
+kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode
+```
+
+# Module 5 Clip 2: Instrumenting FastAPI
+## Update the Dockerfile
+Rebuild the Docker image:
+```
+docker image build -t <RESPOSITORY>:prometheus .
+```
+
+Login to ECR:
+```
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <RESPOSITORY>
+```
+
+Push the image to ECR:
+```
+docker push <RESPOSITORY>:prometheus
+```
+## Update the Kubernetes Depolymnet
+Update deployment.yml:
+```
+spec:
+  containers:
+  - name: widget-api
+    image: <RESPOSITORY>:prometheus
+```
+
+Apply the maninfest:
+```
+kubectl apply -f deployment.yml
+```
+
+## Update the Kubernetes Service
+Update service.yml:
 ```
 apiVersion: v1
 kind: Service
@@ -14,6 +116,10 @@ metadata:
     service.beta.kubernetes.io/aws-load-balancer-type: "nlb"  # Use Network Load Balancer
     service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
     service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "http"
+    # Prometheus annotations for service discovery
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "/metrics"
+    prometheus.io/port: "8000"
 spec:
   type: LoadBalancer
   ports:
@@ -28,200 +134,4 @@ spec:
 Apply the maninfest:
 ```
 kubectl apply -f service.yml
-```
-
-# Module 4 Clip 3: Horizontal Scaling
-
-Create hpa.yml:
-```
-apiVersion: autoscaling/v2
-kind: HorizontalPodAutoscaler
-metadata:
-  name: widget-api-hpa
-spec:
-  scaleTargetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: widget-api
-  minReplicas: 3
-  maxReplicas: 10
-  metrics:
-  - type: Resource
-    resource:
-      name: cpu
-      target:
-        type: Utilization
-        averageUtilization: 70
-  - type: Resource
-    resource:
-      name: memory
-      target:
-        type: Utilization
-        averageUtilization: 80
-```
-
-Apply the maninfest:
-```
-kubectl apply -f hpa.yml
-```
-
-# Module 4 Clip 4: Caching in FastAPI
-## Deploy Redis to EKS
-Create redis.yml:
-```
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: redis-config
-data:
-  redis.conf: |
-    appendonly yes
-    appendfsync everysec
-    save 900 1
-    save 300 10
-    save 60 10000
-    maxmemory 512mb
-    maxmemory-policy allkeys-lru
-    protected-mode no
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: redis
-  labels:
-    app: redis
-spec:
-  ports:
-  - port: 6379
-    name: redis
-  clusterIP: None
-  selector:
-    app: redis
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: redis-data-pvc
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: gp2  # AWS EBS storage class
-  resources:
-    requests:
-      storage: 5Gi
----
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: redis
-spec:
-  serviceName: redis
-  replicas: 1  # Scale this for Redis Cluster, adjust config accordingly
-  selector:
-    matchLabels:
-      app: redis
-  template:
-    metadata:
-      labels:
-        app: redis
-    spec:
-      containers:
-      - name: redis
-        image: redis:7.0-alpine
-        command:
-          - redis-server
-          - "/etc/redis/redis.conf"
-        ports:
-        - containerPort: 6379
-          name: redis
-        volumeMounts:
-        - name: data
-          mountPath: /data
-        - name: config
-          mountPath: /etc/redis
-        resources:
-          requests:
-            cpu: 100m
-            memory: 256Mi
-          limits:
-            cpu: 300m
-            memory: 512Mi
-        livenessProbe:
-          exec:
-            command:
-            - redis-cli
-            - ping
-          initialDelaySeconds: 30
-          timeoutSeconds: 5
-          periodSeconds: 10
-        readinessProbe:
-          exec:
-            command:
-            - redis-cli
-            - ping
-          initialDelaySeconds: 5
-          timeoutSeconds: 5
-          periodSeconds: 10
-      volumes:
-      - name: config
-        configMap:
-          name: redis-config
-  volumeClaimTemplates:
-  - metadata:
-      name: data
-    spec:
-      accessModes: [ "ReadWriteOnce" ]
-      storageClassName: gp2
-      resources:
-        requests:
-          storage: 5Gi
-```
-
-Apply the maninfest:
-```
-kubectl apply -f redis.yml
-```
-
-## Update the Dockerfile
-Add Redis environmental variable to the Dockerfile:
-```
-ENV REDIS_URI redis://localhost:6379/0
-ENV REDIS_TTL 3600
-```
-
-Rebuild the Docker image:
-```
-docker image build -t <RESPOSITORY>:redis .
-```
-
-Login to ECR:
-```
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <RESPOSITORY>
-```
-
-Push the image to ECR:
-```
-docker push <RESPOSITORY>:redis
-```
-
-## Update the deployment
-Add Redis environmental variable to deployment.yml:
-```
-- name: REDIS_URI
-  value: "redis://redis:6379/0"
-- name: REDIS_TTL
-  value: "3600"
-```
-
-Update the image to use the image tagged with redis:
-```
-spec:
-  containers:
-  - name: widget-api
-    image: <RESPOSITORY>:redis
-```
-
-Apply the maninfest:
-```
-kubectl apply -f deployment.yml
 ```

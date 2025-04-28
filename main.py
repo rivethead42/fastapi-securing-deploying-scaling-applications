@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
-from app.api import auth, users, widgets, admin
+from app.api import auth, users, widgets, admin, metrics
 from app.core.config import settings
 from app.core.middleware import add_middleware
 from app.core.events import startup_handler, shutdown_handler
+from app.core.prometheus_middleware import PrometheusMiddleware
 import logging
 import time
 
@@ -32,12 +33,14 @@ async def shutdown():
 
 # Add middleware (CORS, rate limiting)
 add_middleware(app)
+app.add_middleware(PrometheusMiddleware)
 
 # Include routers
 app.include_router(auth.router, tags=["authentication"])
 app.include_router(users.router, prefix="/users", tags=["users"])
 app.include_router(widgets.router, prefix="/widgets", tags=["widgets"])
 app.include_router(admin.router)
+app.include_router(metrics.router)
 
 # Exception handlers
 @app.exception_handler(RequestValidationError)

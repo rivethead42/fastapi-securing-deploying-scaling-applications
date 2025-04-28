@@ -4,6 +4,8 @@ WORKDIR /app
 
 ENV MONGO_URI mongodb://localhost:27017
 ENV MONGO_DB_NAME widget_db
+ENV REDIS_URI redis://localhost:6379/0
+ENV REDIS_TTL 3600
 ENV SECRET_KEY your-secret-key-please-change-in-production
 ENV ALGORITHM HS256
 ENV ACCESS_TOKEN_EXPIRE_MINUTES 30

@@ -10,6 +10,11 @@ pymongo[srv]==4.5.0  # Includes BSON
 # Cache
 redis==5.0.0  # Includes aioredis
 
+# Monitoring
+prometheus-client==0.16.0
+starlette-prometheus==0.10.0
+psutil==5.9.5
+
 # Data validation
 pydantic==2.3.0
 pydantic[email]==2.3.0
