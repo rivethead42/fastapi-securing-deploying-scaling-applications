@@ -2,7 +2,7 @@
 
 A RESTful API for managing widgets with user authentication, built with FastAPI and MongoDB.
 
-# Module 4 Clip 1: 
+# Module 4 Clip 2: Load Balancing in EKS
 
 Create service.yml:
 ```
@@ -30,7 +30,7 @@ Apply the maninfest:
 kubectl apply -f service.yml
 ```
 
-# Module 4 Clip 2: 
+# Module 4 Clip 3: Horizontal Scaling
 
 Create hpa.yml:
 ```
@@ -65,7 +65,7 @@ Apply the maninfest:
 kubectl apply -f hpa.yml
 ```
 
-# Module 4 Clip 3:
+# Module 4 Clip 4: Caching in FastAPI
 ## Deploy Redis to EKS
 Create redis.yml:
 ```
