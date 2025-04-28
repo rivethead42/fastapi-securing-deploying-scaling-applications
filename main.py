@@ -4,6 +4,7 @@ from fastapi.exceptions import RequestValidationError
 from app.api import auth, users, widgets, admin
 from app.core.config import settings
 from app.core.middleware import add_middleware
+from app.core.events import startup_handler, shutdown_handler
 import logging
 import time
 
@@ -19,6 +20,15 @@ app = FastAPI(
     description="API for CRUD operations on widgets with CORS and rate limiting",
     version="1.0.0"
 )
+
+# Register startup and shutdown events
+@app.on_event("startup")
+async def startup():
+    await startup_handler(app)
+
+@app.on_event("shutdown")
+async def shutdown():
+    await shutdown_handler(app)
 
 # Add middleware (CORS, rate limiting)
 add_middleware(app)

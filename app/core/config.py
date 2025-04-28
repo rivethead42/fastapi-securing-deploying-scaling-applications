@@ -14,6 +14,10 @@ class Settings(BaseSettings):
     # MongoDB settings
     MONGO_URI: str = os.getenv("MONGO_URI", "mongodb://localhost:27017")
     MONGO_DB_NAME: str = "widget_db"
+
+    # Redis settings
+    REDIS_URI: str = os.getenv("REDIS_URI", "redis://localhost:6379/0")
+    REDIS_TTL: int = int(os.getenv("REDIS_TTL", "3600"))  # Default cache TTL in seconds
     
     # Authentication settings
     SECRET_KEY: str = os.getenv("SECRET_KEY", "your-secret-key-please-change-in-production")
