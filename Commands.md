@@ -65,6 +65,16 @@ Apply the maninfest:
 kubectl apply -f hpa.yml
 ```
 
+Generate traffic:
+```
+while sleep 0.01; do wget -q -O- <API_LOAD_BALANCER>/health; done
+```
+
+Monitor the HPA:
+```
+kubectl get hpa widget-api-hpa --watch
+```
+
 # Module 4 Clip 4: Caching in FastAPI
 ## Deploy Redis to EKS
 Create redis.yml:
