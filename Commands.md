@@ -66,7 +66,7 @@ kubectl apply -f hpa.yml
 ```
 
 # Module 4 Clip 3:
-
+## Deploy Redis to EKS
 Create redis.yml:
 ```
 apiVersion: v1
@@ -221,9 +221,46 @@ Apply the maninfest:
 kubectl apply -f redis.yml
 ```
 
+## Update the Dockerfile
+Add Redis environmental variable to the Dockerfile:
+```
+ENV REDIS_URI redis://localhost:6379/0
+ENV REDIS_TTL 3600
+```
+
+Rebuild the Docker image:
+```
+docker image build -t <RESPOSITORY>:redis .
+```
+
+Login to ECR:
+```
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin <RESPOSITORY>
+```
+
+Push the image to ECR:
+```
+docker push <RESPOSITORY>:redis
+```
+
+## Update the deployment
+Add Redis environmental variable to deployment.yml:
 ```
 - name: REDIS_URI
-          value: "redis://redis:6379/0"
-        - name: REDIS_TTL
-          value: "3600"
+  value: "redis://redis:6379/0"
+- name: REDIS_TTL
+  value: "3600"
+```
+
+Update the image to use the image tagged with redis:
+```
+spec:
+  containers:
+  - name: widget-api
+    image: <RESPOSITORY>:redis
+```
+
+Apply the maninfest:
+```
+kubectl apply -f deployment.yml
 ```
