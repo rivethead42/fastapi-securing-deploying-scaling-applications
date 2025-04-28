@@ -72,12 +72,9 @@ Create redis.yml:
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: redis-cluster-config
+  name: redis-config
 data:
   redis.conf: |
-    cluster-enabled yes
-    cluster-config-file nodes.conf
-    cluster-node-timeout 5000
     appendonly yes
     appendfsync everysec
     save 900 1
@@ -90,37 +87,44 @@ data:
 apiVersion: v1
 kind: Service
 metadata:
-  name: redis-cluster
+  name: redis
   labels:
-    app: redis-cluster
+    app: redis
 spec:
   ports:
   - port: 6379
-    targetPort: 6379
-    name: client
-  - port: 16379
-    targetPort: 16379
-    name: gossip
+    name: redis
   clusterIP: None
   selector:
-    app: redis-cluster
+    app: redis
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-data-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2  # AWS EBS storage class
+  resources:
+    requests:
+      storage: 5Gi
 ---
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
-  name: redis-cluster
+  name: redis
 spec:
-  serviceName: redis-cluster
-  replicas: 6  # For a minimal Redis Cluster, we need at least 6 nodes (3 masters, 3 slaves)
+  serviceName: redis
+  replicas: 1  # Scale this for Redis Cluster, adjust config accordingly
   selector:
     matchLabels:
-      app: redis-cluster
+      app: redis
   template:
     metadata:
       labels:
-        app: redis-cluster
+        app: redis
     spec:
-      terminationGracePeriodSeconds: 30
       containers:
       - name: redis
         image: redis:7.0-alpine
@@ -129,9 +133,7 @@ spec:
           - "/etc/redis/redis.conf"
         ports:
         - containerPort: 6379
-          name: client
-        - containerPort: 16379
-          name: gossip
+          name: redis
         volumeMounts:
         - name: data
           mountPath: /data
@@ -163,7 +165,7 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: redis-cluster-config
+          name: redis-config
   volumeClaimTemplates:
   - metadata:
       name: data
@@ -173,47 +175,6 @@ spec:
       resources:
         requests:
           storage: 5Gi
----
-apiVersion: batch/v1
-kind: Job
-metadata:
-  name: redis-cluster-init
-  annotations:
-    "helm.sh/hook": post-install
-    "helm.sh/hook-delete-policy": hook-succeeded
-spec:
-  backoffLimit: 5
-  template:
-    spec:
-      containers:
-      - name: cluster-init
-        image: redis:7.0-alpine
-        command:
-        - sh
-        - -c
-        - |
-          # Wait for all Redis pods to be ready
-          echo "Waiting for Redis pods to be ready..."
-          for i in $(seq 0 5); do
-            until redis-cli -h redis-cluster-$i.redis-cluster ping; do
-              echo "Waiting for redis-cluster-$i.redis-cluster to be ready..."
-              sleep 2
-            done
-          done
-          
-          # Create the cluster
-          echo "Creating Redis Cluster..."
-          echo yes | redis-cli --cluster create \
-            redis-cluster-0.redis-cluster:6379 \
-            redis-cluster-1.redis-cluster:6379 \
-            redis-cluster-2.redis-cluster:6379 \
-            redis-cluster-3.redis-cluster:6379 \
-            redis-cluster-4.redis-cluster:6379 \
-            redis-cluster-5.redis-cluster:6379 \
-            --cluster-replicas 1
-          
-          echo "Redis Cluster initialized successfully!"
-      restartPolicy: OnFailure
 ```
 
 Apply the maninfest:

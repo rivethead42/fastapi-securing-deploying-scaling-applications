@@ -22,7 +22,7 @@ spec:
     spec:
       containers:
       - name: widget-api
-        image: 337748711987.dkr.ecr.us-east-1.amazonaws.com/tthomsen-fastapi:latest
+        image: <RESPOSITORY>:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 8000
