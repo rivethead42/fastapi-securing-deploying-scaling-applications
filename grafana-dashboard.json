@@ -81,7 +81,7 @@
         "pluginVersion": "7.5.5",
         "targets": [
           {
-            "expr": "sum(http_requests_active{service=\"widget-api\"}) by (le, operation)",
+            "expr": "http_requests_active{service=\"widget-api\"}",
             "interval": "",
             "legendFormat": "",
             "refId": "A"
