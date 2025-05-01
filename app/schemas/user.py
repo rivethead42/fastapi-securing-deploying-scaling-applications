@@ -63,5 +63,5 @@ class User(UserBase):
     disabled: bool = False
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
         use_enum_values = True  # Store enum values as strings

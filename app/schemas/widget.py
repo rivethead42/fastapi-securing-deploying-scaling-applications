@@ -38,4 +38,4 @@ class Widget(WidgetBase):
     updated_at: Optional[datetime] = None
 
     class Config:
-        allow_population_by_field_name = True
+        populate_by_name = True
