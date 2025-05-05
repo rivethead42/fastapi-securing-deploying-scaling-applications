@@ -1,33 +1,13 @@
-prometheus:
-  prometheusSpec:
-    # Reference your custom rules ConfigMaps
-    additionalRuleLabels:
-      app: fastapi
-    # Configure retention and resource limits as needed
-    retention: 15d
-    resources:
-      requests:
-        memory: 1Gi
-        cpu: 500m
-      limits:
-        memory: 2Gi
-        cpu: 1000m
-
-server:
-  additionalScrapeConfigs:
-    - job_name: 'widget-api'
-      static_configs:
-        - targets: ['widget-api:8000']
-
+# values.yml for Prometheus
 alertmanager:
   config:
     global:
       resolve_timeout: 5m
-      smtp_smarthost: 'smtp.example.com:587'
+      smtp_smarthost: '<SMTP_SERVER>'
       smtp_from: 'alertmanager@example.com'
-      smtp_auth_username: 'alertmanager'
-      smtp_auth_password: 'password'
-      slack_api_url: 'https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK_URL'
+      smtp_auth_username: '<SMTP_USERNAME>'
+      smtp_auth_password: '<SMTP_PASSWORD>'
+      slack_api_url: 'https://hooks.slack.com/services/<YOUR_SLACK_WEBHOOK_URL>'
     
     templates:
     - '/etc/alertmanager/config/*.tmpl'
@@ -96,3 +76,145 @@ alertmanager:
       email_configs:
       - to: 'ops@example.com'
         send_resolved: true
+  enabled: true
+  persistentVolume:
+    enabled: true
+    existingClaim: storage-prometheus-alertmanager-0
+
+server:
+  additionalScrapeConfigs:
+    - job_name: 'widget-api'
+      static_configs:
+        - targets: ['widget-api:8000']
+
+serverFiles:
+  alerting_rules.yml:
+    groups:
+      - name: kubernetes.rules
+        rules:
+          - alert: KubernetesPodCrashLooping
+            expr: rate(kube_pod_container_status_restarts_total[5m]) * 60 * 5 > 0
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Pods that are crash looping"
+              description: "Pods that are crash looping"
+              
+          - alert: KubernetesMemoryPressure
+            expr: kube_node_status_condition{condition="MemoryPressure", status="true"} == 1
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Nodes under memory pressure"
+              description: "Nodes under memory pressure"
+          
+          - alert: KubernetesDiskPressure
+            expr: kube_node_status_condition{condition="DiskPressure", status="true"} == 1
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Nodes under disk pressure"
+              description: "Nodes under disk pressure"
+          
+          - alert: KubernetesNodeNotReady
+            expr: kube_node_status_condition{condition="Ready", status="false"} == 1
+            for: 10m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Nodes not ready"
+              description: "Node has been not ready for more than 10 minutes"
+              
+          - alert: KubernetesHighNumberOfPodsFailed
+            expr: count(kube_pod_status_phase{phase="Failed"}) > 10
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High number of failed pods"
+              description: "More than 10 pods are in Failed state"
+      - name: fastapi.rules
+        rules:
+          - alert: HighErrorRate
+            expr: sum(rate(http_requests_total{service="widget-api", status_code=~"5.."}[5m])) / sum(rate(http_requests_total{service="widget-api"}[5m])) > 0.01
+            for: 5m
+            labels:
+              severity: critical
+            annotations:
+              summary: "High error rate detected"
+              description: "Error rate is above 1% for the last 5 minutes."
+
+          - alert: HighLatency
+            expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{service="widget-api"}[5m])) by (le, endpoint)) > 0.5
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High latency on endpoints"
+              description: "The 95th percentile latency for endpoint is above 500ms."
+          
+          - alert: TooManyActiveRequests
+            expr: http_requests_active{service="widget-api"} > 50
+            for: 5m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Too many active requests"
+              description: "Active requests which is above the threshold of 50."
+          
+          - alert: DatabaseSlowQuery
+            expr: histogram_quantile(0.95, sum(rate(db_query_duration_seconds_bucket{service="widget-api"}[5m])) by (le, operation)) > 0.1
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Slow database queries detected"
+              description: "95th percentile operations above 100ms."
+
+          - alert: LowCacheHitRate
+            expr: sum(rate(cache_hit_total{service="widget-api"}[5m])) / (sum(rate(cache_hit_total{service="widget-api"}[5m])) + sum(rate(cache_miss_total{service="widget-api"}[5m]))) < 0.5
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "Low cache hit rate"
+              description: "Cache hit rate is below 50%."
+          
+          - alert: ApplicationDown
+            expr: up{service="widget-api"} == 0
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Application is down"
+              description: "The Widget API is not responding to health checks."
+          
+          - alert: LowWidgetCreationRate
+            expr: sum(rate(widget_operation_total{service="widget-api", operation="create"}[10m])) < 0.1
+            for: 30m
+            labels:
+              severity: info
+            annotations:
+              summary: "Low widget creation rate"
+              description: "Widget creation rate is unusually low. Less than 0.1 widgets per minute."
+          
+          - alert: IncreasingDatabaseLockWaits
+            expr: rate(db_query_duration_seconds_count{service="widget-api", operation="update"}[5m]) > 10 and histogram_quantile(0.95, rate(db_query_duration_seconds_bucket{service="widget-api", operation="update"}[5m])) > 0.05
+            for: 5m
+            labels:
+              severity: info
+            annotations:
+              summary: "Increasing database update latency"
+              description: "Database update operations are experiencing increasing latency. This could indicate lock contention."
+
+          - alert: HighMemoryUsage
+            expr: memory_usage_bytes{service="widget-api"} > 512 * 1024 * 1024  # 512MB
+            for: 10m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High memory usage"
+              description: "Application memory usage is above 512MB."
