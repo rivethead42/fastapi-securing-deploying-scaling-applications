@@ -3,9 +3,6 @@ Prometheus metrics endpoints
 """
 from fastapi import APIRouter, Depends, Request, Response
 from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
-from app.core.security import get_current_active_user
-from app.core.rbac import require_permission
-from app.schemas.user import User, Permission
 import psutil
 
 router = APIRouter(prefix="/metrics", tags=["metrics"])

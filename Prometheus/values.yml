@@ -3,10 +3,10 @@ alertmanager:
   config:
     global:
       resolve_timeout: 5m
-      smtp_smarthost: '<SMTP_SERVER>'
+      smtp_smarthost: 'smtp.gmail.com:587'
       smtp_from: 'alertmanager@example.com'
-      smtp_auth_username: '<SMTP_USERNAME>'
-      smtp_auth_password: '<SMTP_PASSWORD>'
+      smtp_auth_username: 'cablesandwires@gmail.com'
+      smtp_auth_password: 'D33p0c34n'
       slack_api_url: 'https://hooks.slack.com/services/<YOUR_SLACK_WEBHOOK_URL>'
     
     templates:
