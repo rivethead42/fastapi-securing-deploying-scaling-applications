@@ -194,7 +194,7 @@
         "pluginVersion": "7.5.5",
         "targets": [
           {
-            "expr": "process_cpu_seconds_total",
+            "expr": "process_cpu_seconds_total{service=\"widget-api\"}",
             "interval": "",
             "legendFormat": "",
             "refId": "A"
@@ -248,7 +248,7 @@
         "pluginVersion": "7.5.5",
         "targets": [
           {
-            "expr": "process_open_fds",
+            "expr": "process_open_fds{service=\"widget-api\"}",
             "interval": "",
             "legendFormat": "",
             "refId": "A"
@@ -302,7 +302,7 @@
         "pluginVersion": "7.5.5",
         "targets": [
           {
-            "expr": "process_virtual_memory_bytes",
+            "expr": "process_virtual_memory_bytes{service=\"widget-api\"}",
             "interval": "",
             "legendFormat": "",
             "refId": "A"
@@ -358,7 +358,7 @@
         "pluginVersion": "7.5.5",
         "targets": [
           {
-            "expr": "time() - process_start_time_seconds",
+            "expr": "time() - process_start_time_seconds{service=\"widget-api\"}",
             "interval": "",
             "legendFormat": "",
             "refId": "A"
@@ -1026,7 +1026,7 @@
         "pluginVersion": "7.5.5",
         "targets": [
           {
-            "expr": "sum(http_requests_total{endpoint=~\".*\\.env.*|.*config.*|.*php.*\"}) by (endpoint, method, status_code)",
+            "expr": "sum(http_requests_total{endpoint=~\".*/.env.*|.*config.*|.*php.*\"}) by (endpoint, method, status_code)",
             "format": "table",
             "instant": true,
             "interval": "",
