@@ -2,6 +2,21 @@
 
 A RESTful API for managing widgets with user authentication, built with FastAPI and MongoDB.
 
+# Module 3 Clip 2: Deploying to Production
+##
+Setting up the environment variables:
+```
+export MONGO_URI=mongodb://<MONGODB_URI>:27017
+export MONGO_DB_NAME=widget_db
+export SECRET_KEY="IdF5aErU&FcW6bl5$zO"
+export ALGORITHM=HS256
+export ACCESS_TOKEN_EXPIRE_MINUTES=30
+export CORS_ALLOW_ORIGINS=http://localhost,http://localhost:3000,https://yourdomain.com
+export RATE_LIMIT_ANON_REQUESTS=30
+export RATE_LIMIT_AUTH_REQUESTS=100
+export RATE_LIMIT_WINDOW_SECONDS=60
+```
+
 # Module 3 Clip 3: Deploying to Production
 ## Create a release in GitHub
 Create the tag:
@@ -34,8 +49,8 @@ cd app
 Create a virtual environment:
 ```
 apt install python3.12-venv -y
-python3 -m venv venv
-source venv/bin/activate
+python3 -m venv prod
+source prod/bin/activate
 ```
 
 Install dependencies:
@@ -80,9 +95,14 @@ RATE_LIMIT_AUTH_REQUESTS=100
 RATE_LIMIT_WINDOW_SECONDS=60
 ```
 
+Create a SSL Certificate:
+```
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout key.pem -out cert.pem
+```
+
 Run uvicorn using pm2:
 ```
-pm2 start uvicorn --name fastapi --interpreter python3 -- main:app --host 0.0.0.0 --port 8000
+pm2 start uvicorn --name fastapi --interpreter python3 -- main:app --host 0.0.0.0 --port 8000 --ssl-keyfile=key.pem --ssl-certfile=cert.pem
 ```
 
 ## Setting up an Nginx proxy
