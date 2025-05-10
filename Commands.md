@@ -36,8 +36,6 @@ server:
 EOF
 ```
 
-
-
 ## Configure Grafana:
 Add the Grafana Helm Repository:
 ```
@@ -75,7 +73,7 @@ Get the Admin password:
 kubectl get secret --namespace monitoring grafana -o jsonpath="{.data.admin-password}" | base64 --decode
 ```
 
-# Module 5 Clip 2: Instrumenting FastAPI
+# Module 5 Clip 3: Instrumenting FastAPI
 ## Update the Dockerfile
 Rebuild the Docker image:
 ```
@@ -134,4 +132,52 @@ spec:
 Apply the maninfest:
 ```
 kubectl apply -f service.yml
+```
+
+Setup port-forwarding for Grafana:
+```
+kubectl port-forward -n monitoring svc/grafana 3000:80
+```
+
+Setup port-forwarding for Prometheus:
+```
+kubectl port-forward -n monitoring svc/prometheus-server 3001:80
+```
+
+# Module 5 Clip 5: Configuring Prometheus Alerting
+## Setting up Alertmanager
+
+Create the Alertmanager PVC:
+```
+kubectl apply -f Prometheus\pvc.yml
+```
+
+Setup Prometheus with Alertmanager:
+```
+helm install prometheus prometheus-community/prometheus \
+  --namespace monitoring \
+  --set server.persistentVolume.storageClass=gp2 \
+  --values Prometheus/values.yml
+```
+
+## Setup port-forwarding
+Setup port-forwarding for Grafana:
+```
+kubectl port-forward -n monitoring svc/grafana 3000:80
+```
+
+```
+kubectl port-forward -n monitoring svc/prometheus-server 3001:80
+```
+
+```
+kubectl port-forward -n monitoring svc/prometheus-alertmanager  3002:9093
+```
+
+# Module 5 Clip 6: Tearing down the Stack
+## Setting up Alertmanager
+
+Delete the EKS cluster:
+```
+eksctl delete cluster --name pscluster
 ```
