@@ -12,7 +12,7 @@ async def metrics(
     request: Request
 ):
     """
-    Get Prometheus metrics (requires VIEW_METRICS permission)
+    Get Prometheus metrics
     """
     # Update memory usage metrics - only updated when this endpoint is called
     from app.core.metrics import MEMORY_USAGE

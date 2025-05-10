@@ -97,20 +97,3 @@ def record_cache_operation(operation, duration):
 def record_widget_operation(operation):
     """Record a widget operation"""
     WIDGET_OPERATION_COUNT.labels(operation=operation).inc()
-
-class TimerContextManager:
-    """Context manager for measuring execution time of code blocks"""
-    
-    def __init__(self, metric_function, *args, **kwargs):
-        self.metric_function = metric_function
-        self.args = args
-        self.kwargs = kwargs
-        self.start_time = None
-        
-    def __enter__(self):
-        self.start_time = time.time()
-        return self
-        
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        duration = time.time() - self.start_time
-        self.metric_function(*self.args, duration=duration, **self.kwargs)
